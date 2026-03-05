@@ -42,7 +42,25 @@ public class Census {
     public String[] top3Ages(String region) {
         Map<Integer, Integer> ageCountMap = getCountAges(region);
         List<Map.Entry<Integer, Integer>> top3List = findTop3Ages(ageCountMap);
-        throw new UnsupportedOperationException();
+        return formatTop3ToString(top3List);
+    }
+
+    private String[] formatTop3ToString(List<Map.Entry<Integer, Integer>> top3List) {
+        String[] result = new String[top3List.size()];
+
+        // start from 1st position
+        int position = 1;
+        int concurrent = top3List.isEmpty() ? 0 : top3List.get(0).getValue();
+        for (int i = 0; i < top3List.size(); i++) {
+            Map.Entry<Integer, Integer> entry = top3List.get(i);
+            if (entry.getValue() != concurrent) {
+                // lower count then change to lower position
+                position++;
+                concurrent = entry.getValue();
+            }
+            result[i] = String.format(OUTPUT_FORMAT, position, entry.getKey(), entry.getValue());
+        }
+        return result;
     }
 
     private List<Map.Entry<Integer, Integer>> findTop3Ages(Map<Integer, Integer> ageCountMap) {
