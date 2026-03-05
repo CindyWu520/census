@@ -5,6 +5,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 
 /**
@@ -117,15 +122,50 @@ public class Census {
      * We expect you to make use of all cores in the machine, specified by {@link #CORES).
      */
     public String[] top3Ages(List<String> regionNames) {
+        try {
+            Map<Integer, Integer> ageCountMap = getCountAgesAsync(regionNames);
+        } catch (InterruptedException | ExecutionException e) {
+            return new String[]{};
+        }
 
-//        In the example below, the top three are ages 10, 15 and 12
-//        return new String[]{
-//                String.format(OUTPUT_FORMAT, 1, 10, 38),
-//                String.format(OUTPUT_FORMAT, 2, 15, 35),
-//                String.format(OUTPUT_FORMAT, 3, 12, 30)
-//        };
 
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * calculate the age and count for a list region
+     *
+     * @param regionNames a list of region
+     * @return return a map of age(key) and count(value)
+     */
+    private Map<Integer, Integer> getCountAgesAsync(List<String> regionNames) throws InterruptedException, ExecutionException{
+        ExecutorService executor = Executors.newFixedThreadPool(CORES);
+        try {
+            List<Callable<Map<Integer, Integer>>> tasks = new ArrayList<>();
+            for (String region : regionNames) {
+                tasks.add(() -> getCountAges(region));
+            }
+            List<Future<Map<Integer, Integer>>> futures = executor.invokeAll(tasks);
+
+            // merge all regions into one map
+            Map<Integer, Integer> result = new HashMap<>();
+            for (Future<Map<Integer, Integer>> future : futures) {
+                Map<Integer, Integer> regionMap = future.get();
+                for (Map.Entry<Integer, Integer> entry : regionMap.entrySet()) {
+                    int age = entry.getKey();
+                    int count = entry.getValue();
+                    if (result.containsKey(age)) {
+                        // add count across regions
+                        result.put(age, result.get(age) + count);
+                    } else {
+                        result.put(age, count);
+                    }
+                }
+            }
+            return result;
+        } finally {
+            executor.shutdown();
+        }
     }
 
 
