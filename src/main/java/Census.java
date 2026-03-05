@@ -1,4 +1,6 @@
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,7 +41,33 @@ public class Census {
      */
     public String[] top3Ages(String region) {
         Map<Integer, Integer> ageCountMap = getCountAges(region);
+        List<Map.Entry<Integer, Integer>> top3List = findTop3Ages(ageCountMap);
         throw new UnsupportedOperationException();
+    }
+
+    private List<Map.Entry<Integer, Integer>> findTop3Ages(Map<Integer, Integer> ageCountMap) {
+        // sort by count DESC, then tie-break by age
+        List<Map.Entry<Integer, Integer>> sortedList = new ArrayList<>(ageCountMap.entrySet());
+        sortedList.sort(Map.Entry.<Integer, Integer>comparingByValue(Comparator.reverseOrder())
+                .thenComparing(Map.Entry.comparingByKey()));
+
+        List<Map.Entry<Integer, Integer>> top3List = new ArrayList<>();
+        // rank position: 0:1st, 1:2nd, 2:3rd
+        int position = 0;
+        // start from the highest count
+        int currentCount = sortedList.isEmpty() ? 0 : sortedList.get(0).getValue();
+        for (Map.Entry<Integer, Integer> entry : sortedList) {
+            if (position < 2 & entry.getValue().equals(currentCount)) {
+                // same count, same position
+                top3List.add(entry);
+            } else if (position < 2) {
+                // lower count, lower position
+                top3List.add(entry);
+                position++;
+                currentCount = entry.getValue();
+            }
+        }
+        return top3List;
     }
 
     /**
