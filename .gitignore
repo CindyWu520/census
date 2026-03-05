@@ -1,0 +1,12 @@
+# Build Output
+target/
+build/
+
+# IDE
+.idea/
+
+# logs
+*.log
+
+# OS
+__MACOSX
