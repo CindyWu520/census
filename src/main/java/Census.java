@@ -106,7 +106,11 @@ public class Census {
         Map<Integer, Integer> countAge = new HashMap<>();
         try (AgeInputIterator iterator = iteratorFactory.apply(region)) {
             while (iterator.hasNext()) {
-                Integer age = iterator.next();
+                int age = iterator.next();
+                // remove invalid value
+                if (age < 0) {
+                    continue;
+                }
                 if (countAge.containsKey(age)) {
                     countAge.put(age, countAge.get(age) + 1);
                 } else {
@@ -170,7 +174,6 @@ public class Census {
             executor.shutdown();
         }
     }
-
 
     /**
      * Implementations of this interface will return ages on call to {@link Iterator#next()}. They may open resources
